@@ -144,14 +144,19 @@ class SACHIShowcase(app.MainDiv):
             node.pos = coords
             node.subscribe(node.PERSON_SELECTED, self.on_person_selected)
 
-        self.center_node = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
+        self.center_node_bg = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
+                                             parent=self.people_div,
+                                             pos=center_node_pos,
+                                             color=STROKE_COLOR,
+                                             strokewidth=STROKE_WIDTH,
+                                             fillcolor='000000',
+                                             fillopacity=1,
+                                             )
+
+        self.center_node = avg.ImageNode(size=(CENTER_CIRCLE_SIZE, CENTER_CIRCLE_SIZE),
                                           parent=self.people_div,
-                                          pos=center_node_pos,
-                                          color=STROKE_COLOR,
-                                          strokewidth=STROKE_WIDTH,
-                                          fillcolor='000000',
-                                          fillopacity=1,
-                                          filltexhref=unicode(
+                                          pos=(center_node_pos[0]-0.5*CENTER_CIRCLE_SIZE, center_node_pos[1]-0.5* CENTER_CIRCLE_SIZE),
+                                          href=unicode(
                                               os.path.join(
                                                   getMediaDir(__file__),
                                                   'SACHI_images',
