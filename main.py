@@ -40,6 +40,42 @@ def get_circle_coordinates(center, radius, num):
         yield x, y
 
 
+class PersonNode(avg.DivNode):
+    PERSON_SELECTED = avg.Publisher.genMessageID()
+
+    def __init__(self, data, parent=None, **kwargs):
+        super(PersonNode, self).__init__(**kwargs)
+        self.registerInstance(self, parent)
+
+        self.publish(self.PERSON_SELECTED)
+
+        self._data = data
+
+        if int(data['IS_BIG']) == 1:
+            size = PERSON_NODE_SIZE_LARGE
+        else:
+            size = PERSON_NODE_SIZE_MEDIUM
+
+        self._image = avg.CircleNode(r=size,
+                                     parent=self,
+                                     filltexhref=unicode(
+                                         os.path.join(
+                                             getMediaDir(__file__),
+                                             'SACHI_images',
+                                             data[
+                                                 'IMAGE_PATH'].strip())),
+                                     fillopacity=1,
+                                     color=STROKE_COLOR,
+                                     strokewidth=STROKE_WIDTH,
+                                     )
+
+        self._image.subscribe(self._image.CURSOR_DOWN, self._on_click)
+
+
+    def _on_click(self, event):
+        self.notifySubscribers(self.PERSON_SELECTED, [self._data])
+
+
 class SACHIShowcase(app.MainDiv):
     def onInit(self):
         self.mediadir = getMediaDir(__file__)
@@ -77,50 +113,16 @@ class SACHIShowcase(app.MainDiv):
                          strokewidth=STROKE_WIDTH,
                          parent=self.people_div)
 
-            node = self.create_person_node(data)
+            node = PersonNode(data, parent=self.people_div)
             node.pos = coords
-            node.subscribe(node.CURSOR_DOWN,
-                           lambda event, data=data: self.on_person_down(event,
-                                                                        data),
-                           )
-            node.subscribe(node.CURSOR_OVER or node.HOVER_OVER,
-                           lambda event, node=node: self.on_person_hover(event,
-                                                                         node),
-                           )
-            node.subscribe(node.CURSOR_OUT or node.HOVER_OUT,
-                           lambda event, node=node: self.on_person_hover_out(
-                               event,
-                               node),
-                           )
+            node.subscribe(node.PERSON_SELECTED, self.on_person_selected)
 
-
-    def create_person_node(self, info_dict):
-        if int(info_dict['IS_BIG']) == 1:
-            size = PERSON_NODE_SIZE_LARGE
-        else:
-            size = PERSON_NODE_SIZE_MEDIUM
-
-        node = avg.CircleNode(r=size,
-                              parent=self.people_div,
-                              filltexhref=unicode(
-                                  os.path.join(self.mediadir,
-                                               'SACHI_images',
-                                               info_dict[
-                                                   'IMAGE_PATH'].strip())),
-                              fillopacity=1,
-                              color=STROKE_COLOR,
-                              strokewidth=STROKE_WIDTH,
-                              )
-
-        return node
-
-    def on_person_down(self, event, data):
+    def on_person_selected(self, data):
         self.info_pane.text = self.get_person_info(data['WEB_LINK'])
 
     def on_person_hover(self, event, node):
         r = node.r
         avg.EaseInOutAnim(node, "r", 500, r, 2 * r, 100, 100).start()
-
 
     def on_person_hover_out(self, event, node):
         r = node.r
