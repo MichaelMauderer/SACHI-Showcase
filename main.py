@@ -32,9 +32,10 @@ def get_people_data():
     return result
 
 
-def get_circle_coordinates(center, radius, num):
+def get_circle_coordinates(center, base_radius, num):
     for n in range(num):
         rad = 2 * math.pi * n / num
+        radius = (0.9 * base_radius) if n % 2 == 0 else (base_radius * 1.2)
         x = math.sin(rad) * radius + center[0]
         y = math.cos(rad) * radius + center[1]
         yield x, y
@@ -123,34 +124,39 @@ class SACHIShowcase(app.MainDiv):
                                                   self.size.y * 6 // 8 ),
                                             fillcolor='000000',
                                             fillopacity=0.5,
-
                                             )
         self.info_pane = avg.WordsNode(parent=self.info_div)
 
         # Selection Area Setup
-        self.center_node = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
-                                          parent=self.people_div,
-                                          pos=(
-                                              self.size.x // 4,
-                                              self.size.y // 2),
-                                          color=STROKE_COLOR,
-                                          strokewidth=STROKE_WIDTH,
-                                          fillcolor='FFFFFF',
-                                          fillopacity=1,
-
-                                          )
+        center_node_pos = (
+            self.size.x // 4,
+            self.size.y // 2)
 
         people_data = get_people_data()
         for data, coords in zip(people_data,
-                                get_circle_coordinates(self.center_node.pos,
+                                get_circle_coordinates(center_node_pos,
                                                        200, len(people_data))):
-            avg.LineNode(pos1=coords, pos2=self.center_node.pos,
+            avg.LineNode(pos1=coords, pos2=center_node_pos,
                          strokewidth=STROKE_WIDTH,
                          parent=self.people_div)
 
             node = PersonNode(data, parent=self.people_div)
             node.pos = coords
             node.subscribe(node.PERSON_SELECTED, self.on_person_selected)
+
+        self.center_node = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
+                                          parent=self.people_div,
+                                          pos=center_node_pos,
+                                          color=STROKE_COLOR,
+                                          strokewidth=STROKE_WIDTH,
+                                          fillcolor='000000',
+                                          fillopacity=1,
+                                          filltexhref=unicode(
+                                              os.path.join(
+                                                  getMediaDir(__file__),
+                                                  'SACHI_images',
+                                                  'SACHI_logo_whiteTrans.png'))
+                                          )
 
     def on_person_selected(self, data):
         self.info_pane.text = self.get_person_info(data['WEB_LINK'])
