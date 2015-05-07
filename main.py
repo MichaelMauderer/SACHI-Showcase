@@ -105,17 +105,29 @@ class SACHIShowcase(app.MainDiv):
         self.main_div = avg.DivNode(parent=self)
 
         bg = avg.ImageNode(href='bg.jpg',
-                           parent=self.main_div, size=self.size)
+                           parent=self.main_div,
+                           size=(2 * self.size.x, 2 * self.size.y),
+                           pos=(-0.5 * self.size.x, -  0.5 * self.size.y)
+                           )
+        avg.ContinuousAnim(bg, 'angle', 0, 0.1).start()
 
         self.people_div = avg.DivNode(parent=self.main_div)
 
-        self.info_div = avg.DivNode(parent=self.main_div)
-        self.info_pane = avg.WordsNode(parent=self.info_div,
-                                       pos=(
-                                           self.size.x * 3 // 4,
-                                           self.size.y // 3),
-                                       )
+        # Info Pane Setup
+        self.info_div = avg.DivNode(parent=self.main_div,
+                                    pos=(
+                                        self.size.x * 4 // 7, self.size.y // 8 )
+                                    )
+        self.info_background = avg.RectNode(parent=self.info_div,
+                                            size=(self.size.x * 2 // 5,
+                                                  self.size.y * 6 // 8 ),
+                                            fillcolor='000000',
+                                            fillopacity=0.5,
 
+                                            )
+        self.info_pane = avg.WordsNode(parent=self.info_div)
+
+        # Selection Area Setup
         self.center_node = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
                                           parent=self.people_div,
                                           pos=(
