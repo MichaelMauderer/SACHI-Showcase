@@ -153,15 +153,17 @@ class SACHIShowcase(app.MainDiv):
                                              fillopacity=1,
                                              )
 
-        self.center_node = avg.ImageNode(size=(CENTER_CIRCLE_SIZE, CENTER_CIRCLE_SIZE),
-                                          parent=self.people_div,
-                                          pos=(center_node_pos[0]-0.5*CENTER_CIRCLE_SIZE, center_node_pos[1]-0.5* CENTER_CIRCLE_SIZE),
-                                          href=unicode(
-                                              os.path.join(
-                                                  getMediaDir(__file__),
-                                                  'SACHI_images',
-                                                  'SACHI_logo_whiteTrans.png'))
-                                          )
+        self.center_node = avg.ImageNode(
+            size=(CENTER_CIRCLE_SIZE, CENTER_CIRCLE_SIZE),
+            parent=self.people_div,
+            pos=(center_node_pos[0] - 0.5 * CENTER_CIRCLE_SIZE,
+                 center_node_pos[1] - 0.5 * CENTER_CIRCLE_SIZE),
+            href=unicode(
+                os.path.join(
+                    getMediaDir(__file__),
+                    'SACHI_images',
+                    'SACHI_logo_whiteTrans.png'))
+            )
 
     def on_person_selected(self, data):
         self.info_pane.text = self.get_person_info(data['WEB_LINK'])
