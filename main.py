@@ -51,12 +51,14 @@ class PersonNode(avg.DivNode):
 
         self._data = data
 
-        if int(data['IS_BIG']) == 1:
-            size = PERSON_NODE_SIZE_LARGE
-        else:
-            size = PERSON_NODE_SIZE_MEDIUM
+        self._resisze_anim = None
 
-        self._image = avg.CircleNode(r=size,
+        if int(data['IS_BIG']) == 1:
+            self._base_size = PERSON_NODE_SIZE_LARGE
+        else:
+            self._base_size = PERSON_NODE_SIZE_MEDIUM
+
+        self._image = avg.CircleNode(r=self._base_size,
                                      parent=self,
                                      filltexhref=unicode(
                                          os.path.join(
@@ -70,7 +72,28 @@ class PersonNode(avg.DivNode):
                                      )
 
         self._image.subscribe(self._image.CURSOR_DOWN, self._on_click)
+        self._image.subscribe(self._image.CURSOR_OVER or self._image.HOVER_OVER,
+                              self._on_person_hover)
+        self._image.subscribe(self._image.CURSOR_OUT or self._image.HOVER_OUT,
+                              self._on_person_hover_out)
 
+    def _abort_resize_anim(self):
+        if self._resisze_anim is not None:
+            self._resisze_anim.abort()
+
+    def _on_person_hover(self, event):
+        self._abort_resize_anim()
+        self._resisze_anim = avg.EaseInOutAnim(self._image, "r", 500,
+                                               self._image.r,
+                                               2 * self._base_size, 100, 100)
+        self._resisze_anim.start()
+
+    def _on_person_hover_out(self, event):
+        self._abort_resize_anim()
+        self._resisze_anim = avg.EaseInOutAnim(self._image, "r", 500,
+                                               self._image.r, self._base_size,
+                                               100, 100)
+        self._resisze_anim.start()
 
     def _on_click(self, event):
         self.notifySubscribers(self.PERSON_SELECTED, [self._data])
@@ -119,14 +142,6 @@ class SACHIShowcase(app.MainDiv):
 
     def on_person_selected(self, data):
         self.info_pane.text = self.get_person_info(data['WEB_LINK'])
-
-    def on_person_hover(self, event, node):
-        r = node.r
-        avg.EaseInOutAnim(node, "r", 500, r, 2 * r, 100, 100).start()
-
-    def on_person_hover_out(self, event, node):
-        r = node.r
-        avg.EaseInOutAnim(node, "r", 500, r, r // 2, 100, 100).start()
 
     def get_person_info(self, url):
         return url
