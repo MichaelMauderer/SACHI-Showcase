@@ -4,6 +4,10 @@ import csv
 import math
 import os
 
+import lxml.html
+import urllib
+import cgi
+
 from libavg import avg
 from libavg import app
 from libavg.utils import getMediaDir
@@ -44,17 +48,13 @@ def get_circle_coordinates(center, base_radius, num):
 
 
 class WebInfoCollector(object):
-
     @staticmethod
     def get_person_info(url):
-        import lxml.html
-        import urllib
-        import cgi
-
         connection = urllib.urlopen(url)
         dom = lxml.html.fromstring(connection.read())
         content = dom.xpath("//div[@id='content']/div/div[last()]/p")
-        return u' '.join([cgi.escape(element.text_content()) for element in content])
+        return u' '.join(
+            [cgi.escape(element.text_content()) for element in content])
 
 
 class PersonNode(avg.DivNode):
@@ -142,7 +142,7 @@ class SACHIShowcase(app.MainDiv):
                                             fillopacity=0.5,
                                             )
         self.info_pane = avg.WordsNode(parent=self.info_div,
-                                       size = self.info_background.size,
+                                       size=self.info_background.size,
                                        fontsize=15,
                                        alignment="left"
                                        )
