@@ -190,4 +190,6 @@ class SACHIShowcase(app.MainDiv):
 
 
 if __name__ == '__main__':
-    app.App().run(SACHIShowcase(), app_resolution=str('1280x720'))
+    app.App().run(SACHIShowcase(),
+        app_resolution=str('1920x1080'),
+        app_fullscreen='true')
