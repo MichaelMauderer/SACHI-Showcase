@@ -4,7 +4,7 @@ import csv
 import math
 import os
 
-from libavg import avg, player
+from libavg import avg
 from libavg import app
 from libavg.utils import getMediaDir
 
@@ -26,6 +26,8 @@ def get_people_data():
     with open(PEOPLE_DATA_PATH) as in_file:
         for person_dict in csv.DictReader(in_file,
                                           fieldnames=PEOPLE_DATA_FIELDNAMES):
+            person_dict['WEB_DATA'] = WebInfoCollector.get_person_info(
+                person_dict['WEB_LINK'])
             result.append(person_dict)
 
     result.sort(key=lambda x: int(x['POS']))
@@ -39,6 +41,20 @@ def get_circle_coordinates(center, base_radius, num):
         x = math.sin(rad) * radius + center[0]
         y = math.cos(rad) * radius + center[1]
         yield x, y
+
+
+class WebInfoCollector(object):
+
+    @staticmethod
+    def get_person_info(url):
+        import lxml.html
+        import urllib
+        import cgi
+
+        connection = urllib.urlopen(url)
+        dom = lxml.html.fromstring(connection.read())
+        content = dom.xpath("//div[@id='content']/div/div[last()]/p")
+        return u' '.join([cgi.escape(element.text_content()) for element in content])
 
 
 class PersonNode(avg.DivNode):
@@ -125,7 +141,11 @@ class SACHIShowcase(app.MainDiv):
                                             fillcolor='000000',
                                             fillopacity=0.5,
                                             )
-        self.info_pane = avg.WordsNode(parent=self.info_div)
+        self.info_pane = avg.WordsNode(parent=self.info_div,
+                                       size = self.info_background.size,
+                                       fontsize=15,
+                                       alignment="left"
+                                       )
 
         # Selection Area Setup
         center_node_pos = (
@@ -163,13 +183,10 @@ class SACHIShowcase(app.MainDiv):
                     getMediaDir(__file__),
                     'SACHI_images',
                     'SACHI_logo_whiteTrans.png'))
-            )
+        )
 
     def on_person_selected(self, data):
-        self.info_pane.text = self.get_person_info(data['WEB_LINK'])
-
-    def get_person_info(self, url):
-        return url
+        self.info_pane.text = data['WEB_DATA']
 
 
 if __name__ == '__main__':
