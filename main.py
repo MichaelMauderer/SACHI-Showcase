@@ -155,7 +155,8 @@ class SACHIShowcase(app.MainDiv):
                                             size=(self.size.x * 2 // 5,
                                                   self.size.y * 6 // 8 ),
                                             fillcolor='000000',
-                                            fillopacity=0.5,
+                                            fillopacity=0.3,
+                                            strokewidth=0,
                                             )
         self.info_pane = avg.WordsNode(parent=self.info_div,
                                        size=self.info_background.size,
