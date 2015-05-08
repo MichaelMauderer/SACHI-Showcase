@@ -3,6 +3,7 @@ import csv
 
 import math
 import os
+from threading import Thread
 
 import lxml.html
 import urllib
@@ -21,7 +22,7 @@ STROKE_COLOR = 'FFFFFF'
 STROKE_WIDTH = 4
 
 PEOPLE_DATA_PATH = './media/input_csv_file.csv'
-PEOPLE_DATA_FIELDNAMES = ['NAME', 'WEB_LINK', 'IMAGE_PATH', 'IS_BIG', 'POS']
+PEOPLE_DATA_FIELDNAMES = ['NAME', 'WEB_URL', 'IMAGE_PATH', 'IS_BIG', 'POS']
 
 
 def get_people_data():
@@ -30,8 +31,7 @@ def get_people_data():
     with open(PEOPLE_DATA_PATH) as in_file:
         for person_dict in csv.DictReader(in_file,
                                           fieldnames=PEOPLE_DATA_FIELDNAMES):
-            person_dict['WEB_DATA'] = WebInfoCollector.get_person_info(
-                person_dict['WEB_LINK'])
+            WebInfoCollector.load_data_async(person_dict['WEB_URL'])
             result.append(person_dict)
 
     result.sort(key=lambda x: int(x['POS']))
@@ -48,13 +48,26 @@ def get_circle_coordinates(center, base_radius, num):
 
 
 class WebInfoCollector(object):
-    @staticmethod
-    def get_person_info(url):
+    cache = dict()
+
+    @classmethod
+    def load_data_async(cls, url):
+        thread = Thread(target=cls.load_data,
+                        args=(url,))
+        thread.start()
+
+    @classmethod
+    def load_data(cls, url):
         connection = urllib.urlopen(url)
         dom = lxml.html.fromstring(connection.read())
         content = dom.xpath("//div[@id='content']/div/div[last()]/p")
-        return u' '.join(
+        cls.cache[url] = u' '.join(
             [cgi.escape(element.text_content()) for element in content])
+
+
+    @classmethod
+    def get_person_info(cls, url):
+        return cls.cache.get(url, 'Loading...')
 
 
 class PersonNode(avg.DivNode):
@@ -99,11 +112,14 @@ class PersonNode(avg.DivNode):
             self._resisze_anim.abort()
 
     def _on_person_hover(self, event):
+
         self._abort_resize_anim()
         self._resisze_anim = avg.EaseInOutAnim(self._image, "r", 500,
                                                self._image.r,
-                                               2 * self._base_size, 100, 100)
+                                               2 * self._base_size, 100, 100,
+                                               )
         self._resisze_anim.start()
+
 
     def _on_person_hover_out(self, event):
         self._abort_resize_anim()
@@ -186,7 +202,8 @@ class SACHIShowcase(app.MainDiv):
         )
 
     def on_person_selected(self, data):
-        self.info_pane.text = data['WEB_DATA']
+        WebInfoCollector.load_data_async(data['WEB_URL'])
+        self.info_pane.text = WebInfoCollector.get_person_info(data['WEB_URL'])
 
 
 if __name__ == '__main__':
