@@ -30,13 +30,42 @@ PEOPLE_DATA_FIELDNAMES = ['NAME', 'WEB_URL', 'IMAGE_PATH', 'IS_BIG', 'POS']
 player = avg.Player.get()
 
 
+
+
+
+
+class WebInfoCollector(object):
+    def __init__(self, cache_id='web_cache'):
+        self._cache_id = cache_id
+        self._cache = shelve.open(self._cache_id)
+
+    def load_data_async(self, url):
+        thread = Thread(target=self.load_data,
+                        args=(url,))
+        thread.start()
+
+    def load_data(self, url):
+        connection = urllib.urlopen(url)
+        dom = lxml.html.fromstring(connection.read())
+        content = dom.xpath("//div[@id='content']/div/div[last()]/p")
+        cache = shelve.open(self._cache_id)
+        elements = [element.text_content() for element in content]
+        elements = [cgi.escape(element) for element in elements if element]
+        cache[url] = u'<br/><br/>'.join(elements)
+
+    def get_person_info(self, url):
+        cache = shelve.open(self._cache_id)
+        return cache.get(url, 'Loading...')
+
+info_collector = WebInfoCollector()
+
 def get_people_data():
     result = []
 
     with open(PEOPLE_DATA_PATH) as in_file:
         for person_dict in csv.DictReader(in_file,
                                           fieldnames=PEOPLE_DATA_FIELDNAMES):
-            WebInfoCollector.load_data_async(person_dict['WEB_URL'])
+            info_collector.load_data_async(person_dict['WEB_URL'])
             result.append(person_dict)
 
     result.sort(key=lambda x: int(x['POS']))
@@ -50,37 +79,6 @@ def get_circle_coordinates(center, base_radius, num):
         x = math.sin(rad) * radius + center[0]
         y = math.cos(rad) * radius + center[1]
         yield x, y
-
-
-class WebInfoCollector(object):
-    cache_id = 'url_cache'
-
-    @classmethod
-    def load_data_async(cls, url):
-        thread = Thread(target=cls.load_data,
-                        args=(url,))
-        thread.start()
-
-    @classmethod
-    def load_data(cls, url):
-
-        connection = urllib.urlopen(url)
-        dom = lxml.html.fromstring(connection.read())
-        content = dom.xpath("//div[@id='content']/div/div[last()]/p")
-        cache = shelve.open(cls.cache_id)
-        try:
-            cache[url] = u'<br/><br/>'.join(
-                [cgi.escape(element.text_content()) for element in content])
-        finally:
-            cache.close()
-
-    @classmethod
-    def get_person_info(cls, url):
-        cache = shelve.open(cls.cache_id)
-        try:
-            return cache.get(url, 'Loading...')
-        finally:
-            cache.close
 
 class PersonNode(avg.DivNode):
     PERSON_SELECTED = avg.Publisher.genMessageID()
@@ -241,8 +239,8 @@ class SACHIShowcase(app.MainDiv):
         )
 
     def on_person_selected(self, data):
-        WebInfoCollector.load_data_async(data['WEB_URL'])
-        self.info_pane.text = WebInfoCollector.get_person_info(data['WEB_URL'])
+        info_collector.load_data_async(data['WEB_URL'])
+        self.info_pane.text = info_collector.get_person_info(data['WEB_URL'])
 
 
 if __name__ == '__main__':
