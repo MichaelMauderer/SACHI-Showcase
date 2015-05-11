@@ -157,6 +157,15 @@ class SACHIShowcase(app.MainDiv):
                            )
         avg.ContinuousAnim(bg, 'angle', 0, 0.1).start()
 
+        bg_wave_overlay = avg.VideoNode(href='waves.avi',
+                                        loop=True,
+                                        parent=self.main_div,
+                                        opacity=0.4,
+                                        size=self.size,
+                                        fps=15
+                                        )
+        bg_wave_overlay.play()
+
         # Info Pane Setup
         self.info_div = avg.DivNode(parent=self.main_div,
                                     pos=(
