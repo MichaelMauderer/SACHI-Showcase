@@ -128,6 +128,7 @@ class PersonNode(avg.DivNode):
                                                2 * self._base_size, 100, 100,
                                                )
         self._resisze_anim.start()
+        self.notifySubscribers(self.PERSON_SELECTED, [self._data])
 
 
     def _on_person_hover_out(self, event):
