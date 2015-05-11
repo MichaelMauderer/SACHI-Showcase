@@ -181,6 +181,7 @@ class InfoPane(avg.DivNode):
 class SACHIShowcase(app.MainDiv):
     def onInit(self):
         self.mediadir = getMediaDir(__file__)
+        self._setup_multitouch()
         self.main_div = avg.DivNode(parent=self)
 
         # Background Setup
@@ -260,6 +261,23 @@ class SACHIShowcase(app.MainDiv):
                     'SACHI_logo_whiteTrans.png'))
         )
 
+    def _setup_multitouch(self):
+        if app.instance.settings.getBoolean('multitouch_enabled'):
+            return
+
+        import platform
+
+        if platform.system() == 'Linux':
+            os.putenv('AVG_MULTITOUCH_DRIVER', 'XINPUT')
+        elif platform.system() == 'Windows':
+            os.putenv('AVG_MULTITOUCH_DRIVER', 'WIN7TOUCH')
+        else:
+            os.putenv('AVG_MULTITOUCH_DRIVER', 'TUIO')
+
+        try:
+            player.enableMultitouch()
+        except Exception, e:
+            pass
 
 if __name__ == '__main__':
     app.App().run(SACHIShowcase(),
