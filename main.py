@@ -3,6 +3,7 @@ import csv
 
 import math
 import os
+import shelve
 from threading import Thread
 
 import lxml.html
@@ -52,7 +53,7 @@ def get_circle_coordinates(center, base_radius, num):
 
 
 class WebInfoCollector(object):
-    cache = dict()
+    cache_id = 'url_cache'
 
     @classmethod
     def load_data_async(cls, url):
@@ -62,17 +63,24 @@ class WebInfoCollector(object):
 
     @classmethod
     def load_data(cls, url):
+
         connection = urllib.urlopen(url)
         dom = lxml.html.fromstring(connection.read())
         content = dom.xpath("//div[@id='content']/div/div[last()]/p")
-        cls.cache[url] = u'<br/><br/>'.join(
-            [cgi.escape(element.text_content()) for element in content])
-
+        cache = shelve.open(cls.cache_id)
+        try:
+            cache[url] = u'<br/><br/>'.join(
+                [cgi.escape(element.text_content()) for element in content])
+        finally:
+            cache.close()
 
     @classmethod
     def get_person_info(cls, url):
-        return cls.cache.get(url, 'Loading...')
-
+        cache = shelve.open(cls.cache_id)
+        try:
+            return cache.get(url, 'Loading...')
+        finally:
+            cache.close
 
 class PersonNode(avg.DivNode):
     PERSON_SELECTED = avg.Publisher.genMessageID()
@@ -161,10 +169,12 @@ class SACHIShowcase(app.MainDiv):
                                             fillopacity=0.3,
                                             strokewidth=0,
                                             )
-        words_size = self.info_background.size[0] * 0.8, self.info_background.size[1] * 0.8
-        words_pos = self.info_background.size[0] * 0.1, self.info_background.size[1] * 0.1
+        words_size = self.info_background.size[0] * 0.8, \
+                     self.info_background.size[1] * 0.8
+        words_pos = self.info_background.size[0] * 0.1, \
+                    self.info_background.size[1] * 0.1
         self.info_pane = avg.WordsNode(parent=self.info_div,
-                                       pos = words_pos,
+                                       pos=words_pos,
                                        size=words_size,
                                        fontsize=15,
                                        alignment="left"
