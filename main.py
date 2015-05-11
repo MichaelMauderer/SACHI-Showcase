@@ -16,13 +16,17 @@ from libavg.utils import getMediaDir
 X_RES, Y_RES = 1920, 1080
 
 CENTER_CIRCLE_SIZE = X_RES // 20
-PERSON_NODE_SIZE_MEDIUM = X_RES // 95
+PERSON_NODE_SIZE_MEDIUM = X_RES // 80
 PERSON_NODE_SIZE_LARGE = PERSON_NODE_SIZE_MEDIUM * 3 // 2
 STROKE_COLOR = 'FFFFFF'
 STROKE_WIDTH = 4
 
+BASE_PEOPLE_CENTRE_DISTANCE = 300
+
 PEOPLE_DATA_PATH = './media/input_csv_file.csv'
 PEOPLE_DATA_FIELDNAMES = ['NAME', 'WEB_URL', 'IMAGE_PATH', 'IS_BIG', 'POS']
+
+player = avg.Player.get()
 
 
 def get_people_data():
@@ -137,14 +141,13 @@ class SACHIShowcase(app.MainDiv):
         self.mediadir = getMediaDir(__file__)
         self.main_div = avg.DivNode(parent=self)
 
+        # Background Setup
         bg = avg.ImageNode(href='bg.jpg',
                            parent=self.main_div,
                            size=(2 * self.size.x, 2 * self.size.y),
                            pos=(-0.5 * self.size.x, -  0.5 * self.size.y)
                            )
         avg.ContinuousAnim(bg, 'angle', 0, 0.1).start()
-
-        self.people_div = avg.DivNode(parent=self.main_div)
 
         # Info Pane Setup
         self.info_div = avg.DivNode(parent=self.main_div,
@@ -165,6 +168,17 @@ class SACHIShowcase(app.MainDiv):
                                        )
 
         # Selection Area Setup
+        self.people_canvas = player.createCanvas(id="people",
+                                                 size=self.size,
+                                                 handleevents=True,
+                                                 multisamplesamples=9,
+                                                 mipmap=True
+                                                 )
+        self.people_div = self.people_canvas.getRootNode()
+        shaddow = avg.ImageNode(href="canvas:people", parent=self.main_div)
+        shaddow.setEffect(avg.ShadowFXNode((0.0, 0.0), 10.0))
+        avg.ImageNode(href="canvas:people", parent=self.main_div)
+
         center_node_pos = (
             self.size.x // 4,
             self.size.y // 2)
@@ -172,7 +186,8 @@ class SACHIShowcase(app.MainDiv):
         people_data = get_people_data()
         for data, coords in zip(people_data,
                                 get_circle_coordinates(center_node_pos,
-                                                       200, len(people_data))):
+                                                       BASE_PEOPLE_CENTRE_DISTANCE,
+                                                       len(people_data))):
             avg.LineNode(pos1=coords, pos2=center_node_pos,
                          strokewidth=STROKE_WIDTH,
                          parent=self.people_div)
