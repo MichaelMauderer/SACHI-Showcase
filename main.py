@@ -194,7 +194,7 @@ class SACHIShowcase(app.MainDiv):
         self.people_canvas = player.createCanvas(id="people",
                                                  size=self.size,
                                                  handleevents=True,
-                                                 multisamplesamples=9,
+                                                 multisamplesamples=8,
                                                  mipmap=True
                                                  )
         self.people_div = self.people_canvas.getRootNode()
