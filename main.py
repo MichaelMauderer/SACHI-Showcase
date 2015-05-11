@@ -163,9 +163,19 @@ class InfoPane(avg.DivNode):
                                        alignment="left"
                                        )
 
+        self.heading = avg.WordsNode(parent=self,
+                                     pos=(self.size[0] / 2, words_pos[0] / 2),
+                                     size=words_size,
+                                     fontsize=30,
+                                     alignment="center",
+
+                                     )
+
+
     def on_person_selected(self, data):
         info_collector.load_data_async(data['WEB_URL'])
         self.info_pane.text = info_collector.get_person_info(data['WEB_URL'])
+        self.heading.text = data['NAME']
 
 
 class SACHIShowcase(app.MainDiv):
