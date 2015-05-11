@@ -65,7 +65,7 @@ class WebInfoCollector(object):
         connection = urllib.urlopen(url)
         dom = lxml.html.fromstring(connection.read())
         content = dom.xpath("//div[@id='content']/div/div[last()]/p")
-        cls.cache[url] = u' '.join(
+        cls.cache[url] = u'<br/><br/>'.join(
             [cgi.escape(element.text_content()) for element in content])
 
 
@@ -161,10 +161,14 @@ class SACHIShowcase(app.MainDiv):
                                             fillopacity=0.3,
                                             strokewidth=0,
                                             )
+        words_size = self.info_background.size[0] * 0.8, self.info_background.size[1] * 0.8
+        words_pos = self.info_background.size[0] * 0.1, self.info_background.size[1] * 0.1
         self.info_pane = avg.WordsNode(parent=self.info_div,
-                                       size=self.info_background.size,
+                                       pos = words_pos,
+                                       size=words_size,
                                        fontsize=15,
                                        alignment="left"
+
                                        )
 
         # Selection Area Setup
