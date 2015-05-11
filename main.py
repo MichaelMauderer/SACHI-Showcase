@@ -30,10 +30,6 @@ PEOPLE_DATA_FIELDNAMES = ['NAME', 'WEB_URL', 'IMAGE_PATH', 'IS_BIG', 'POS']
 player = avg.Player.get()
 
 
-
-
-
-
 class WebInfoCollector(object):
     def __init__(self, cache_id='web_cache'):
         self._cache_id = cache_id
@@ -57,7 +53,9 @@ class WebInfoCollector(object):
         cache = shelve.open(self._cache_id)
         return cache.get(url, 'Loading...')
 
+
 info_collector = WebInfoCollector()
+
 
 def get_people_data():
     result = []
@@ -79,6 +77,7 @@ def get_circle_coordinates(center, base_radius, num):
         x = math.sin(rad) * radius + center[0]
         y = math.cos(rad) * radius + center[1]
         yield x, y
+
 
 class PersonNode(avg.DivNode):
     PERSON_SELECTED = avg.Publisher.genMessageID()
@@ -142,6 +141,33 @@ class PersonNode(avg.DivNode):
         self.notifySubscribers(self.PERSON_SELECTED, [self._data])
 
 
+class InfoPane(avg.DivNode):
+    def __init__(self, parent, **kwargs):
+        super(InfoPane, self).__init__(**kwargs)
+        self.registerInstance(self, parent)
+
+        self.info_background = avg.RectNode(parent=self,
+                                            size=self.size,
+                                            fillcolor='000000',
+                                            fillopacity=0.3,
+                                            strokewidth=0,
+                                            )
+        words_size = self.info_background.size[0] * 0.8, \
+                     self.info_background.size[1] * 0.8
+        words_pos = self.info_background.size[0] * 0.1, \
+                    self.info_background.size[1] * 0.1
+        self.info_pane = avg.WordsNode(parent=self,
+                                       pos=words_pos,
+                                       size=words_size,
+                                       fontsize=15,
+                                       alignment="left"
+                                       )
+
+    def on_person_selected(self, data):
+        info_collector.load_data_async(data['WEB_URL'])
+        self.info_pane.text = info_collector.get_person_info(data['WEB_URL'])
+
+
 class SACHIShowcase(app.MainDiv):
     def onInit(self):
         self.mediadir = getMediaDir(__file__)
@@ -165,28 +191,13 @@ class SACHIShowcase(app.MainDiv):
         bg_wave_overlay.play()
 
         # Info Pane Setup
-        self.info_div = avg.DivNode(parent=self.main_div,
-                                    pos=(
-                                        self.size.x * 4 // 7, self.size.y // 8 )
-                                    )
-        self.info_background = avg.RectNode(parent=self.info_div,
-                                            size=(self.size.x * 2 // 5,
-                                                  self.size.y * 6 // 8 ),
-                                            fillcolor='000000',
-                                            fillopacity=0.3,
-                                            strokewidth=0,
-                                            )
-        words_size = self.info_background.size[0] * 0.8, \
-                     self.info_background.size[1] * 0.8
-        words_pos = self.info_background.size[0] * 0.1, \
-                    self.info_background.size[1] * 0.1
-        self.info_pane = avg.WordsNode(parent=self.info_div,
-                                       pos=words_pos,
-                                       size=words_size,
-                                       fontsize=15,
-                                       alignment="left"
-
-                                       )
+        self.info_div = InfoPane(parent=self.main_div,
+                                 pos=(
+                                     self.size.x * 4 // 7,
+                                     self.size.y // 8 ),
+                                 size=(self.size.x * 2 // 5,
+                                       self.size.y * 6 // 8 ),
+                                 )
 
         # Selection Area Setup
         self.people_canvas = player.createCanvas(id="people",
@@ -215,7 +226,8 @@ class SACHIShowcase(app.MainDiv):
 
             node = PersonNode(data, parent=self.people_div)
             node.pos = coords
-            node.subscribe(node.PERSON_SELECTED, self.on_person_selected)
+            node.subscribe(node.PERSON_SELECTED,
+                           self.info_div.on_person_selected)
 
         self.center_node_bg = avg.CircleNode(r=CENTER_CIRCLE_SIZE,
                                              parent=self.people_div,
@@ -237,10 +249,6 @@ class SACHIShowcase(app.MainDiv):
                     'SACHI_images',
                     'SACHI_logo_whiteTrans.png'))
         )
-
-    def on_person_selected(self, data):
-        info_collector.load_data_async(data['WEB_URL'])
-        self.info_pane.text = info_collector.get_person_info(data['WEB_URL'])
 
 
 if __name__ == '__main__':
