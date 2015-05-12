@@ -191,7 +191,17 @@ class SACHIShowcase(app.MainDiv):
                            size=(2 * self.size.x, 2 * self.size.y),
                            pos=(-0.5 * self.size.x, -  0.5 * self.size.y)
                            )
+        bg.setEffect(avg.HueSatFXNode(0.0, 40.0, 20.0, False))
         avg.ContinuousAnim(bg, 'angle', 0, 0.1).start()
+
+        bg_particle_overlay = avg.VideoNode(href='particles.avi',
+                                            loop=True,
+                                            parent=self.main_div,
+                                            opacity=0.4,
+                                            size=self.size,
+                                            fps=15
+                                            )
+        bg_particle_overlay.play()
 
         bg_wave_overlay = avg.VideoNode(href='waves.avi',
                                         loop=True,
@@ -279,6 +289,7 @@ class SACHIShowcase(app.MainDiv):
             player.enableMultitouch()
         except Exception, e:
             pass
+
 
 if __name__ == '__main__':
     app.App().run(SACHIShowcase(),
